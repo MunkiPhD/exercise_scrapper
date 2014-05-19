@@ -28,11 +28,19 @@ class ExerciseParser
 	def self.exercise_info(exercise_page)
 		info = {}
 		info[:name] = exercise_page.search('h1')[0].text.strip
+		# 0 = Type
+		# 1 = Main Muscle
+		# 2 = Other Muscles
+		# 3 = Equipment
+		# 4 = Mechanics type
+		# 5 = Equipment
+		# 6 = Competence level
+		# 7 = is a sport
+		# 8 = force type
 		details = exercise_page.search('#exerciseDetails a').map(&:text)
 		info[:main_muscle] = details[1]
 		info[:mechanics] = details[3]
 		info[:level] = details[4]
-		info[:sport] = details[5]
 		info[:force] = details[6]
 		info
 	end
