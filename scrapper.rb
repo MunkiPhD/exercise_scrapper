@@ -5,31 +5,57 @@ require 'mechanize'
 
 puts 'script starting'
 puts '--------------------------------------------'
-#url = 'http://www.bodybuilding.com/exercises/list/index/selected/a'
-#doc = Nokogiri::HTML(open(url))
-#file_path = '/home/munkiphd/development/exercise_scrapper/test_page.html'
-#doc = Nokogiri::HTML(File.open(file_path))
-#puts doc.at_css('title').text
 
-class ExerciseParser
-	def initialize(doc)
-		@doc = doc
+class ExerciseScrapper
+	attr_accessor :url
+
+	def initialize(url)
+		@url = url
+		@agent = Mechanize.new
 	end
 
-	def pages
-		puts @doc.search("#pager :nth-child(1)").map(&:text).join
+
+	def scrape
+		listings = @agent.get(@url)
+		exercises_listings(listings)
 	end
 
-	def exercise_names
-		@doc.search("h3 a").each do |node|
-			puts node.text
+
+	private
+
+	def exercises_listings(listings)
+		listings.search('#pager a').each do |listing|
+			exercises_for_letter(listing)
+			break
 		end
 	end
 
-	def self.exercise_info(exercise_page)
+
+	def exercises_for_letter(listing)
+		# each individual exercise by letter
+		exercises_letter_list = @agent.click(listing)
+
+		# this iterates over all the exercises on the page
+		exercises_letter_list.search('h3 a').each do |exercise_listing|
+			puts "looking at: #{exercise_listing.text.strip}"
+			unless exercise_listing.text.include?("View All")
+				exercise_page = @agent.click(exercise_listing)
+				info = ExerciseParser.exercise_info(exercise_page)
+				puts info
+				break
+			end
+		end
+	end
+
+
+	def exercise_info(exercise_page)
 		info = {}
 		info[:name] = exercise_page.search('h1')[0].text.strip
 		details = exercise_page.search('#exerciseDetails a').map(&:text)
+		parse_info(info, details)
+	end
+
+	def parse_info(info, details)
 		if details.length > 8
 			return parse_long_info(info, details)
 		else
@@ -37,8 +63,8 @@ class ExerciseParser
 		end
 	end
 
-	private
-	def self.parse_short_info(info, details)
+
+	def parse_short_info(info, details)
 		#	0 = Type
 		# 1 = Main Muscle
 		# 2 = Equipment
@@ -55,10 +81,11 @@ class ExerciseParser
 		info
 	end
 
-	def self.parse_long_info(info, details)
+
+	def parse_long_info(info, details)
 		# 0 = Type
 		# 1 = Main Muscle
-		# 2 - length - 7 = Other Muscles 
+		# 2 through length - 7 = Other Muscles 
 		# length - 7 = Equipment
 		# length - 6 = Mechanics type
 		# length - 5 = Equipment
@@ -76,26 +103,10 @@ class ExerciseParser
 end
 
 
-# we start off with the 0-9 because there are only two exercises there, and the # in the links throws the parsing off
+# we start off on the 0-9 listing page because there are only two exercises there (ones that no one cares about really) and the # in the links throws the parsing off
 url = 'http://www.bodybuilding.com/exercises/list/index/selected/0-9'
-agent = Mechanize.new
-listings = agent.get(url)
-listings.search('#pager a').each do |listing|
-	# each individual exercise by letter
-	exercises_letter_list = agent.click(listing)
-
-	# this iterates over all the exercises on the page
-	exercises_letter_list.search('h3 a').each do |exercise_listing|
-		puts "looking at: #{exercise_listing.text.strip}"
-		unless exercise_listing.text.include?("View All")
-			exercise_page = agent.click(exercise_listing)
-			info = ExerciseParser.exercise_info(exercise_page)
-			puts info
-			break
-		end
-	end
-	break
-end
+scrapper = ExerciseScrapper.new(url)
+scrapper.scrape
 
 puts '--------------------------------------------'
 puts 'script ended!'
