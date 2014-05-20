@@ -6,6 +6,56 @@ require 'mechanize'
 puts 'script starting'
 puts '--------------------------------------------'
 
+module ExerciseDetails
+	def self.gather_info(info, details)
+		if details.length > 8
+			return parse_long_info(info, details)
+		else
+			return parse_short_info(info, details)
+		end
+	end
+
+	private
+
+	def self.parse_short_info(info, details)
+		#	0 = Type
+		# 1 = Main Muscle
+		# 2 = Equipment
+		# 3 = Mechanics type
+		# 4 = Equipment
+		# 5 = Competence level
+		# 6 = is a sport
+		# 7 = force type
+		info[:main_muscle] = details[1]
+		info[:equipment] = details[2]
+		info[:mechanics] = details[3]
+		info[:level] = details[4]
+		info[:force] = details[6]
+		info
+	end
+
+
+	def self.parse_long_info(info, details)
+		# 0 = Type
+		# 1 = Main Muscle
+		# 2 through length - 7 = Other Muscles 
+		# length - 7 = Equipment
+		# length - 6 = Mechanics type
+		# length - 5 = Equipment
+		# length - 4 = Competence level
+		# length - 3 = is a sport
+		# length - 2 = force type
+		length = details.length
+		info[:main_muscle] = details[1]
+		info[:equipment] = details[length - 6]
+		info[:mechanics] = details[length - 5]
+		info[:level] = details[length - 4]
+		info[:force] = details[length - 2]
+		info
+	end
+end
+
+
 class ExerciseScrapper
 	attr_accessor :url
 
@@ -40,7 +90,7 @@ class ExerciseScrapper
 			puts "looking at: #{exercise_listing.text.strip}"
 			unless exercise_listing.text.include?("View All")
 				exercise_page = @agent.click(exercise_listing)
-				info = ExerciseParser.exercise_info(exercise_page)
+				info = exercise_info(exercise_page)
 				puts info
 				break
 			end
@@ -52,53 +102,7 @@ class ExerciseScrapper
 		info = {}
 		info[:name] = exercise_page.search('h1')[0].text.strip
 		details = exercise_page.search('#exerciseDetails a').map(&:text)
-		parse_info(info, details)
-	end
-
-	def parse_info(info, details)
-		if details.length > 8
-			return parse_long_info(info, details)
-		else
-			return parse_short_info(info, details)
-		end
-	end
-
-
-	def parse_short_info(info, details)
-		#	0 = Type
-		# 1 = Main Muscle
-		# 2 = Equipment
-		# 3 = Mechanics type
-		# 4 = Equipment
-		# 5 = Competence level
-		# 6 = is a sport
-		# 7 = force type
-		info[:main_muscle] = details[1]
-		info[:equipment] = details[2]
-		info[:mechanics] = details[3]
-		info[:level] = details[4]
-		info[:force] = details[6]
-		info
-	end
-
-
-	def parse_long_info(info, details)
-		# 0 = Type
-		# 1 = Main Muscle
-		# 2 through length - 7 = Other Muscles 
-		# length - 7 = Equipment
-		# length - 6 = Mechanics type
-		# length - 5 = Equipment
-		# length - 4 = Competence level
-		# length - 3 = is a sport
-		# length - 2 = force type
-		length = details.length
-		info[:main_muscle] = details[1]
-		info[:equipment] = details[length - 6]
-		info[:mechanics] = details[length - 5]
-		info[:level] = details[length - 4]
-		info[:force] = details[length - 2]
-		info
+		ExerciseDetails.gather_info(info, details)
 	end
 end
 
