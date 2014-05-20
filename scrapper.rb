@@ -19,14 +19,14 @@ module ExerciseDetails
 	private
 
 	def self.parse_short_info(info, details)
-		#	0 = Type
+		# 0 = Type
 		# 1 = Main Muscle
 		# 2 = Equipment
 		# 3 = Mechanics type
-		# 4 = Equipment
-		# 5 = Competence level
-		# 6 = is a sport
-		# 7 = force type
+		# 4 = Competence level
+		# 5 = is a sport
+		# 6 = force type
+		info[:type] = details[0]
 		info[:main_muscle] = details[1]
 		info[:equipment] = details[2]
 		info[:mechanics] = details[3]
@@ -42,12 +42,14 @@ module ExerciseDetails
 		# 2 through length - 7 = Other Muscles 
 		# length - 7 = Equipment
 		# length - 6 = Mechanics type
-		# length - 5 = Equipment
+		# length - 5 = Mechanics
 		# length - 4 = Competence level
 		# length - 3 = is a sport
 		# length - 2 = force type
 		length = details.length
+		info[:type] = details[0]
 		info[:main_muscle] = details[1]
+		info[:other_muscles] = details[2..length-7]
 		info[:equipment] = details[length - 6]
 		info[:mechanics] = details[length - 5]
 		info[:level] = details[length - 4]
@@ -101,7 +103,7 @@ class ExerciseScrapper
 
 
 	def exercise_info(exercise_page)
-		info = { "name" => "#{exercise_page.search('h1')[0].text.strip}" }
+		info = { "name" => "#{exercise_page.search('h1')[0].text.strip}", "rating" => exercise_page.search('#largeratingwidget .rating').text.to_f }
 		details = exercise_page.search('#exerciseDetails a').map(&:text)
 		ExerciseDetails.gather_info(info, details)
 		info[:directions] = exercise_page.search('.guideContent li').map { |x| x.text.squeeze.strip }
