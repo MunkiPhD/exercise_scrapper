@@ -81,7 +81,6 @@ class ExerciseScrapper
 	def exercises_listings(listings)
 		listings.search('#pager a').each do |listing|
 			exercises_for_letter(listing)
-			break
 		end
 	end
 
@@ -92,18 +91,23 @@ class ExerciseScrapper
 
 		# this iterates over all the exercises on the page
 		exercises_letter_list.search('h3 a').each do |exercise_listing|
-			puts "looking at: #{exercise_listing.text.strip}"
+			puts "#{exercise_listing.text.strip}"
 			unless exercise_listing.text.include?("View All")
 				exercise_page = @agent.click(exercise_listing)
 				@data << exercise_info(exercise_page)
-				break
+				sleep_for_a_few
 			end
 		end
 	end
 
+	def sleep_for_a_few
+		sleep_time = rand(1..5)
+		sleep(sleep_time)
+	end
+
 
 	def exercise_info(exercise_page)
-		info = { "name" => "#{exercise_page.search('h1')[0].text.strip}", "rating" => exercise_page.search('#largeratingwidget .rating').text.to_f }
+		info = { :name => "#{exercise_page.search('h1')[0].text.strip}", :rating => exercise_page.search('#largeratingwidget .rating').text.to_f }
 		details = exercise_page.search('#exerciseDetails a').map(&:text)
 		ExerciseDetails.gather_info(info, details)
 		info[:directions] = exercise_page.search('.guideContent li').map { |x| x.text.squeeze.strip }
