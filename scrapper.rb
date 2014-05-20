@@ -104,6 +104,8 @@ class ExerciseScrapper
 		info = { "name" => "#{exercise_page.search('h1')[0].text.strip}" }
 		details = exercise_page.search('#exerciseDetails a').map(&:text)
 		ExerciseDetails.gather_info(info, details)
+		info[:directions] = exercise_page.search('.guideContent li').map { |x| x.text.squeeze.strip }
+		info
 	end
 end
 
