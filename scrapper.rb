@@ -2,6 +2,7 @@ require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
 require 'mechanize'
+require 'json'
 
 puts 'script starting'
 puts '--------------------------------------------'
@@ -62,12 +63,14 @@ class ExerciseScrapper
 	def initialize(url)
 		@url = url
 		@agent = Mechanize.new
+		@data = []
 	end
 
 
 	def scrape
 		listings = @agent.get(@url)
 		exercises_listings(listings)
+		@data
 	end
 
 
@@ -90,8 +93,7 @@ class ExerciseScrapper
 			puts "looking at: #{exercise_listing.text.strip}"
 			unless exercise_listing.text.include?("View All")
 				exercise_page = @agent.click(exercise_listing)
-				info = exercise_info(exercise_page)
-				puts info
+				@data << exercise_info(exercise_page)
 				break
 			end
 		end
@@ -99,10 +101,17 @@ class ExerciseScrapper
 
 
 	def exercise_info(exercise_page)
-		info = {}
-		info[:name] = exercise_page.search('h1')[0].text.strip
+		info = { "name" => "#{exercise_page.search('h1')[0].text.strip}" }
 		details = exercise_page.search('#exerciseDetails a').map(&:text)
 		ExerciseDetails.gather_info(info, details)
+	end
+end
+
+module WriteToJsonFile
+	def self.write(arr, filename)
+		File.open(filename, 'w') do |f|
+			f.write(arr.to_json)
+		end
 	end
 end
 
@@ -110,7 +119,9 @@ end
 # we start off on the 0-9 listing page because there are only two exercises there (ones that no one cares about really) and the # in the links throws the parsing off
 url = 'http://www.bodybuilding.com/exercises/list/index/selected/0-9'
 scrapper = ExerciseScrapper.new(url)
-scrapper.scrape
+@data = scrapper.scrape
+puts @data
+WriteToJsonFile.write(@data, "exercise_data.json")
 
 puts '--------------------------------------------'
 puts 'script ended!'
