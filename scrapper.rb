@@ -95,7 +95,7 @@ class ExerciseScrapper
 			unless exercise_listing.text.include?("View All")
 				exercise_page = @agent.click(exercise_listing)
 				@data << exercise_info(exercise_page)
-				sleep_for_a_few
+				#sleep_for_a_few
 			end
 		end
 	end
@@ -107,7 +107,10 @@ class ExerciseScrapper
 
 
 	def exercise_info(exercise_page)
-		info = { :name => "#{exercise_page.search('h1')[0].text.strip}", :rating => exercise_page.search('#largeratingwidget .rating').text.to_f }
+		info = { :name => "#{exercise_page.search('h1')[0].text.strip}", 
+			:rating => exercise_page.search('#largeratingwidget .rating').text.to_f,
+			:alternate_name => "#{exercise_page.search('#exerciseDetails label').text.strip}"
+		}
 		details = exercise_page.search('#exerciseDetails a').map(&:text)
 		ExerciseDetails.gather_info(info, details)
 		info[:directions] = exercise_page.search('.guideContent li').map { |x| x.text.squeeze.strip }
