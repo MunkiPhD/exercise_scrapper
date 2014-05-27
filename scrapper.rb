@@ -101,7 +101,7 @@ class ExerciseScrapper
 	end
 
 	def sleep_for_a_few
-		sleep_time = rand(1..5)
+		sleep_time = rand(10..15)
 		sleep(sleep_time)
 	end
 
@@ -113,7 +113,8 @@ class ExerciseScrapper
 		}
 		details = exercise_page.search('#exerciseDetails p a').map(&:text)
 		ExerciseDetails.gather_info(info, details)
-		info[:directions] = exercise_page.search('.guideContent li').map { |x| x.text.squeeze.strip }
+		info[:directions] = exercise_page.search('.guideContent li').map { |x| x.text.squeeze(" ").strip }
+		#print "#{info[:directions][0]}"
 		info
 	end
 end
