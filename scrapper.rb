@@ -109,9 +109,9 @@ class ExerciseScrapper
 	def exercise_info(exercise_page)
 		info = { :name => "#{exercise_page.search('h1')[0].text.strip}", 
 			:rating => exercise_page.search('#largeratingwidget .rating').text.to_f,
-			:alternate_name => "#{exercise_page.search('#exerciseDetails label').text.strip}"
+			:alternate_name => "#{exercise_page.search('h1+ p label').text.strip}"
 		}
-		details = exercise_page.search('#exerciseDetails a').map(&:text)
+		details = exercise_page.search('#exerciseDetails p a').map(&:text)
 		ExerciseDetails.gather_info(info, details)
 		info[:directions] = exercise_page.search('.guideContent li').map { |x| x.text.squeeze.strip }
 		info
