@@ -1,14 +1,18 @@
-class DetailsParser
+module DetailsParser
+	def self.parametize(str)
+		str.gsub(/\s+/, "_").downcase
+	end
+
 	def self.parse_details(page)
 		page.search("#exerciseDetails p br").map {|n| n.replace("++")}
 		data = page.search("#exerciseDetails p").map { |n| n.text }
-		data = data.map { |n| n.split("++") }
-		data.flatten!
-		data = data.map { |n| n.squeeze(" ").strip }
-		data = data.map { |n| n.split(":") }
+		data.map! { |n| n.split("++") }.flatten!
+		data.map! { |n| n.squeeze(" ").strip.split(":") }
 		data.reject! { |n| n.empty? }
-		data.inject ({}) do |r,s|
-			r.merge!( { s[0].strip => s[1].strip })
+		data = data.inject ({}) do |r,s|
+			r.merge!( { parametize(s[0].strip).to_sym => s[1].strip })
 		end
+		data.delete :your_rating
+		data
 	end
 end
